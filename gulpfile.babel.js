@@ -14,7 +14,7 @@ gulp.task('less', () => {
   gulp.src('./src/public/css/*.less')
   .pipe(plumber())
   .pipe(less())
-  .pipe(gulp.dest('./src/public/css'))
+  .pipe(gulp.dest('./build/public/css'))
   .pipe(livereload());
 });
 
@@ -44,18 +44,26 @@ gulp.task('es6', () => {
   .pipe(livereload());
 });
 
-gulp.task('watch', ()=> {
+gulp.task('watch', () => {
   gulp.watch('./src/public/css/*.less', ['less']);
   gulp.watch('./src/public/**/*.js', ['es6']);
+  gulp.watch(['./src/**/*.js', '!./src/public/**/*.js'], ['es6:server']);
 });
 
-gulp.task('develop', function () {
+gulp.task('copy', () => {
+  gulp.src('./src/app/views/**')
+  .pipe(gulp.dest('./build/app/views/'));
+  gulp.src('./src/public/img/**')
+  .pipe(gulp.dest('./build/public/img/'));
+});
+
+gulp.task('develop', () => {
   livereload.listen();
   nodemon({
-    script: 'src/app.js',
+    script: 'build/app.js',
     ext: 'js',
     stdout: false
-  }).on('readable', function () {
+  }).on('readable', () => {
     this.stdout.on('data', function (chunk) {
       if(/^Express server listening on port/.test(chunk)){
         livereload.changed(__dirname);
@@ -67,6 +75,10 @@ gulp.task('develop', function () {
 });
 
 gulp.task('default', [
+  'es6',
+  'es6:server',
   'less',
+  'copy',
+  'develop',
   'watch'
   ]);
